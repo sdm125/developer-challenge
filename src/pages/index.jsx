@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { graphql } from "gatsby";
 
 import "normalize.css";
@@ -7,6 +7,9 @@ import { css } from "@emotion/core";
 
 import SEO from "../components/SEO";
 import { ReactComponent as Logo } from "../assets/Logo.svg";
+
+import Card from "../components/Card";
+import Nav from "../components/Nav";
 
 // ========= COMPONENTS =========
 
@@ -23,7 +26,7 @@ const Container = styled.div`
 	align-items: center;
 	flex-direction: column;
 
-	background-color: #c0ffee;
+	background-color: #7855da;
 	color: #43d1e7;
 
 	font-family: "Lobster";
@@ -33,25 +36,61 @@ const Container = styled.div`
 // ========= MAIN =========
 const Index = ({ data }) => {
 	// get the product data from prisma
-	const item = data.prismicProduct.data;
+	const { edges: items } = data.allPrismicProduct;
+	const [activeItem, setActiveItem] = useState({
+		navItem: `SOUPS`,
+		data: items.filter((item) => {
+			return item.node.data.type === `SOUP`;
+		}),
+	});
+	const {
+		data: [cardData],
+	} = activeItem;
 
 	return (
-		<>
+		<div
+			css={css`
+				height: 896px;
+				width: 414px;
+			`}
+		>
 			{/* set the page metadata */}
 			<SEO title="Welcome to the Challenge" />
 
 			<Container>
 				<div
 					css={css`
+						display: flex;
+						flex-direction: column;
 						margin-bottom: 1rem;
 					`}
 				>
-					I want {item.quantity.text} of{` `}
-					{item.title.text}, please.
+					<Logo
+						css={css`
+							margin-left: 50px;
+							color: #fff;
+						`}
+					/>
+
+					<Card
+						title={cardData.node.data.title.text}
+						description={
+							cardData.node.data.description.text
+						}
+						quantity={cardData.node.data.quantity.text}
+						imageSrc={
+							cardData.node.data.image.fixed.src
+						}
+					/>
+
+					<Nav
+						activeNavItem={activeItem.navItem}
+						activeItemHandler={setActiveItem}
+						items={items}
+					/>
 				</div>
-				<Logo />
 			</Container>
-		</>
+		</div>
 	);
 };
 
@@ -61,14 +100,27 @@ export default Index;
 // use gatsby's graphql query to get required data
 export const query = graphql`
 	query {
-		prismicProduct(data: { type: { eq: "SOUP" } }) {
-			id
-			data {
-				title {
-					text
-				}
-				quantity {
-					text
+		allPrismicProduct {
+			edges {
+				node {
+					id
+					data {
+						description {
+							text
+						}
+						image {
+							fixed {
+								src
+							}
+						}
+						title {
+							text
+						}
+						quantity {
+							text
+						}
+						type
+					}
 				}
 			}
 		}
